@@ -6,36 +6,39 @@ import (
 	"context"
 )
 
-// WithReader executes the provided function within a temporary snapshot,
-// ensuring read-only access to the key-value store. The snapshot is discarded
-// after the function completes, regardless of the outcome.
+type NewSnapshotFunc[S Snapshot] = func(context.Context) (S, error)
+
+// WithReader executes the work function within a temporary snapshot, ensuring
+// read-only access to the key-value store. The snapshot is discarded after the
+// function completes, regardless of the outcome.
 //
 // Returns an error if creating the snapshot or executing the function
 // fails. The context controls cancellation and timeouts.
-func WithReader[T Transaction, S Snapshot](ctx context.Context, db Database[T, S], f func(context.Context, Reader) error) error {
-	snap, err := db.NewSnapshot(ctx)
+func WithReader[S Snapshot](ctx context.Context, snapf NewSnapshotFunc[S], work func(context.Context, Reader) error) error {
+	snap, err := snapf(ctx)
 	if err != nil {
 		return err
 	}
 	defer snap.Discard(ctx)
-	return f(ctx, snap)
+	return work(ctx, snap)
 }
 
-// WithReadWriter executes the provided function within a temporary
-// transaction, providing read-write access to the key-value store. The
-// transaction is committed if the function returns nil; otherwise, it is
-// rolled back.
+type NewTransactionFunc[T Transaction] = func(ctx context.Context) (T, error)
+
+// WithReadWriter executes the work function within a temporary transaction,
+// providing read-write access to the key-value store. The transaction is
+// committed if the function returns nil; otherwise, it is rolled back.
 //
 // Returns an error if creating the transaction, executing the function, or
 // committing the transaction fails. The context controls cancellation and
 // timeouts.
-func WithReadWriter[T Transaction, S Snapshot](ctx context.Context, db Database[T, S], f func(context.Context, ReadWriter) error) error {
-	tx, err := db.NewTransaction(ctx)
+func WithReadWriter[T Transaction](ctx context.Context, txf NewTransactionFunc[T], work func(context.Context, ReadWriter) error) error {
+	tx, err := txf(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	if err := f(ctx, tx); err != nil {
+	if err := work(ctx, tx); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)

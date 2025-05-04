@@ -48,14 +48,3 @@ type Transaction interface {
 	// the transaction is already committed or rolled back.
 	Commit(ctx context.Context) error
 }
-
-// Database defines an interface for creating transactions and snapshots.
-type Database[T Transaction, S Snapshot] interface {
-	// NewTransaction creates a new read-write transaction. Returns a non-nil
-	// error if the operation fails.
-	NewTransaction(ctx context.Context) (T, error)
-
-	// NewSnapshot creates a new read-only snapshot. Returns a non-nil error if
-	// the operation fails.
-	NewSnapshot(ctx context.Context) (S, error)
-}
