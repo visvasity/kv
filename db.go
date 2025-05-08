@@ -2,7 +2,9 @@
 
 package kv
 
-import "context"
+import (
+	"context"
+)
 
 // Reader combines interfaces for reading key-value pairs.
 type Reader interface {
@@ -47,4 +49,36 @@ type Transaction interface {
 	// changes to the key-value store. Returns nil on success or os.ErrClosed if
 	// the transaction is already committed or rolled back.
 	Commit(ctx context.Context) error
+}
+
+// Database interface type defines methods required on all key-value databases.
+type Database interface {
+	NewTransaction(context.Context) (Transaction, error)
+	NewSnapshot(context.Context) (Snapshot, error)
+}
+
+type NewSnapshotFunc[S Snapshot] func(context.Context) (S, error)
+type NewTransactionFunc[T Transaction] func(ctx context.Context) (T, error)
+
+type anyDatabase[T Transaction, S Snapshot] struct {
+	newTx   NewTransactionFunc[T]
+	newSnap NewSnapshotFunc[S]
+}
+
+func (v *anyDatabase[T, S]) NewTransaction(ctx context.Context) (Transaction, error) {
+	return v.newTx(ctx)
+}
+
+func (v *anyDatabase[T, S]) NewSnapshot(ctx context.Context) (Snapshot, error) {
+	return v.newSnap(ctx)
+}
+
+// DatabaseFrom is a helper function that can create uniform Database interface
+// objects for different database implementations each with their own concrete
+// types for Transactions and Snapshots.
+func DatabaseFrom[T Transaction, S Snapshot](newTx NewTransactionFunc[T], newSnap NewSnapshotFunc[S]) Database {
+	return &anyDatabase[T, S]{
+		newTx:   newTx,
+		newSnap: newSnap,
+	}
 }
