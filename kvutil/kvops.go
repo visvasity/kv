@@ -13,16 +13,15 @@ import (
 )
 
 // GetGob decodes the Gob encoded bytes at the key and returns as an object.
-func GetGob[T any](ctx context.Context, g kv.Getter, key string) (*T, error) {
-	value, err := g.Get(ctx, key)
+func GetGob[T any](ctx context.Context, g kv.Getter, key string, value *T) error {
+	v, err := g.Get(ctx, key)
 	if err != nil {
-		return nil, fmt.Errorf("could not Get from %q: %w", key, err)
+		return fmt.Errorf("could not Get from %q: %w", key, err)
 	}
-	gv := new(T)
-	if err := gob.NewDecoder(value).Decode(gv); err != nil {
-		return nil, fmt.Errorf("could not gob-decode value at key %q: %w", key, err)
+	if err := gob.NewDecoder(v).Decode(value); err != nil {
+		return fmt.Errorf("could not gob-decode value at key %q: %w", key, err)
 	}
-	return gv, nil
+	return nil
 }
 
 // SetGob creates or updates the value at the key to Gob encoded bytes of the input value.
