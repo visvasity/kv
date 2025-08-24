@@ -10,7 +10,6 @@ import (
 type Reader interface {
 	Getter
 	Ranger
-	Scanner
 }
 
 // Writer combines interfaces for modifying key-value pairs.

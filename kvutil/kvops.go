@@ -70,22 +70,3 @@ func DescendGob[T any](ctx context.Context, r kv.Ranger, beg, end string, errp *
 		}
 	}
 }
-
-// ScanGob iterates over all values in the database, unmarshaling them as Gob
-// encoded bytes into a value of type T. Returned value through the iterator is
-// overwritten when the next key-value pair is visited.
-func ScanGob[T any](ctx context.Context, s kv.Scanner, errp *error) iter.Seq2[string, *T] {
-	return func(yield func(string, *T) bool) {
-		var gv, zero T
-		for k, v := range s.Scan(ctx, errp) {
-			gv = zero
-			if err := gob.NewDecoder(v).Decode(&gv); err != nil {
-				*errp = err
-				return
-			}
-			if !yield(k, &gv) {
-				return
-			}
-		}
-	}
-}

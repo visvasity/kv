@@ -51,10 +51,3 @@ type Ranger interface {
 	// Descend is similar to Ascend but iterates in the descending order.
 	Descend(ctx context.Context, beg, end string, errp *error) iter.Seq2[string, io.Reader]
 }
-
-// Scanner defines an interface for iterating over all key-value pairs.
-type Scanner interface {
-	// Scan returns an iterator over all key-value pairs in no specific order,
-	// visiting each key exactly once. Errors are stored in errp.
-	Scan(ctx context.Context, errp *error) iter.Seq2[string, io.Reader]
-}
