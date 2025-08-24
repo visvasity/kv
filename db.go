@@ -56,12 +56,28 @@ type Database interface {
 	NewSnapshot(context.Context) (Snapshot, error)
 }
 
-type NewSnapshotFunc[S Snapshot] func(context.Context) (S, error)
-type NewTransactionFunc[T Transaction] func(ctx context.Context) (T, error)
+// GenericDatabase interface is similar to the Database interface, but uses
+// generic type arguments to represent database specific concrete types for
+// NewTransaction and NewSnapshot methods. [DatabaseFrom] function can be used
+// to convert a GenericDatabase to a non-generic Database interface.
+type GenericDatabase[T Transaction, S Snapshot] interface {
+	NewTransaction(context.Context) (T, error)
+	NewSnapshot(context.Context) (S, error)
+}
+
+// DatabaseFrom is a helper function that can create non-generic Database
+// interface object for different database implementations each with their own
+// concrete return types for NewTransaction and NewSnapshot methods.
+func DatabaseFrom[T Transaction, S Snapshot](db GenericDatabase[T, S]) Database {
+	return &anyDatabase[T, S]{
+		newTx:   db.NewTransaction,
+		newSnap: db.NewSnapshot,
+	}
+}
 
 type anyDatabase[T Transaction, S Snapshot] struct {
-	newTx   NewTransactionFunc[T]
-	newSnap NewSnapshotFunc[S]
+	newTx   func(context.Context) (T, error)
+	newSnap func(context.Context) (S, error)
 }
 
 func (v *anyDatabase[T, S]) NewTransaction(ctx context.Context) (Transaction, error) {
@@ -70,14 +86,4 @@ func (v *anyDatabase[T, S]) NewTransaction(ctx context.Context) (Transaction, er
 
 func (v *anyDatabase[T, S]) NewSnapshot(ctx context.Context) (Snapshot, error) {
 	return v.newSnap(ctx)
-}
-
-// DatabaseFrom is a helper function that can create uniform Database interface
-// objects for different database implementations each with their own concrete
-// types for Transactions and Snapshots.
-func DatabaseFrom[T Transaction, S Snapshot](newTx NewTransactionFunc[T], newSnap NewSnapshotFunc[S]) Database {
-	return &anyDatabase[T, S]{
-		newTx:   newTx,
-		newSnap: newSnap,
-	}
 }
