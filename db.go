@@ -45,8 +45,15 @@ type Transaction interface {
 	Rollback(ctx context.Context) error
 
 	// Commit validates all reads and writes for conflicts and atomically applies
-	// changes to the key-value store. Returns nil on success or os.ErrClosed if
-	// the transaction is already committed or rolled back.
+	// changes to the key-value store. Returns nil on success or if the
+	// transaction has already committed. Returns non-nil error if transaction
+	// commit has failed or was already rolled back.
+	//
+	// In case of remote databases, this function MUST NOT return a non-nil error
+	// ever (eg: timeout) if the transaction was committed, but success response
+	// is lost due to network issues/delays. Database client SHOULD internally
+	// retry forever (as necessary) to confirm the final status of the
+	// transaction.
 	Commit(ctx context.Context) error
 }
 
