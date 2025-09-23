@@ -12,8 +12,9 @@ import (
 	"github.com/visvasity/kv"
 )
 
-// GetGob decodes the Gob encoded bytes at the key and returns as an object.
-func GetGob[T any](ctx context.Context, g kv.Getter, key string, value *T) error {
+// GetGob decodes the Gob encoded bytes at the key and returns as an
+// object. Input value parameter must be of a pointer type.
+func GetGob(ctx context.Context, g kv.Getter, key string, value any) error {
 	v, err := g.Get(ctx, key)
 	if err != nil {
 		return fmt.Errorf("could not Get from %q: %w", key, err)
@@ -24,8 +25,9 @@ func GetGob[T any](ctx context.Context, g kv.Getter, key string, value *T) error
 	return nil
 }
 
-// SetGob creates or updates the value at the key to Gob encoded bytes of the input value.
-func SetGob[T any](ctx context.Context, s kv.Setter, key string, value *T) error {
+// SetGob creates or updates the value at the key to Gob encoded bytes of the
+// input value.
+func SetGob(ctx context.Context, s kv.Setter, key string, value any) error {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(value); err != nil {
 		return err
