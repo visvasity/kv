@@ -2,17 +2,20 @@
 
 package kvutil
 
-import (
-	"fmt"
-)
-
 // PrefixRange returns the begin and end keys that cover all keys with a given prefix.
 func PrefixRange(dir string) (begin string, end string) {
-	n := len(dir)
-	if n == 0 {
-		return "", ""
-	}
 	begin = dir
-	end = dir[:n-1] + fmt.Sprintf("%c", dir[n-1]+1)
+	end = prefixEnd(dir)
 	return begin, end
+}
+
+func prefixEnd(prefix string) string {
+	b := []byte(prefix)
+	for i := len(b) - 1; i >= 0; i-- {
+		if b[i] != 0xff {
+			b[i]++
+			return string(b[:i+1])
+		}
+	}
+	return "" // End of the entire Keyspace.
 }
