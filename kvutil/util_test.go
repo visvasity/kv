@@ -6,7 +6,12 @@ import "testing"
 
 func TestPrefixRange(t *testing.T) {
 	beg, end := PrefixRange("abcd")
-	t.Logf("begin=%q end=%q", beg, end)
+	if beg != "abcd" {
+		t.Errorf(`wanted beg="abcd" got %q`, beg)
+	}
+	if end != "abce" {
+		t.Errorf(`wanted end="abce" got %q`, beg)
+	}
 }
 
 func TestEndOfKeyspacePrefixRange(t *testing.T) {
