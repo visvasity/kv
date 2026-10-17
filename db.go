@@ -25,8 +25,10 @@ type ReadWriter interface {
 	Writer
 }
 
-// Snapshot represents a read-only view of the database at a specific point in
-// time.
+// Snapshot represents a consistent, repeatable-read view of the database.
+//
+// The snapshot's view is established either at creation time or on first use
+// (first read operation), depending on the underlying implementation.
 type Snapshot interface {
 	Reader
 

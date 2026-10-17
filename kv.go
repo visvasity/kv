@@ -32,22 +32,26 @@ type Deleter interface {
 	Delete(ctx context.Context, key string) error
 }
 
-// Ranger defines an interface for iterating over key-value pairs within a
-// specified range.
+// Ranger provides ordered iteration over key-value pairs in lexicographical
+// order. Both Ascend and Descend define a half-open range [begin, end).
+//
+// Empty string argument is handled as follows:
+//
+//   - beg == "" => iteration starts at the smallest key (no lower bound)
+//
+//   - end == "" => iteration stops at the last largest key (no upper bound)
+//
+//   - beg == "" && end == "" => the range covers the entire database
+//
+// When both begin and end are non-empty and begin > end (byte-wise
+// comparison), the iterator yields no items and sets *errp = os.ErrInvalid.
+//
+// Iteration stops at the first error encountered. The errp must not be nil
+// otherwise Ascend/Descend operations will panic.
 type Ranger interface {
-	// Ascend returns an iterator over key-value pairs in ascending order within
-	// the range defined by begin and end.
-	//
-	//  - If begin and end are both empty, range includes all pairs in the database.
-	//  - If begin is empty, range begins at the smallest key.
-	//  - If end is empty, range ends after the largest key.
-	//  - If both are non-empty, begin must be less than or equal to end, or
-	//    os.ErrInvalid is returned.
-	//
-	// The range includes the begin key and excludes the end key. Errors are
-	// stored in errp.
+	// Ascend iterates over keys in ascending order within the range [beg, end).
 	Ascend(ctx context.Context, beg, end string, errp *error) iter.Seq2[string, io.Reader]
 
-	// Descend is similar to Ascend but iterates in the descending order.
+	// Descend iterates over keys in descending order within the range [beg, end).
 	Descend(ctx context.Context, beg, end string, errp *error) iter.Seq2[string, io.Reader]
 }
