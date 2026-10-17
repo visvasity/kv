@@ -55,3 +55,12 @@ type Ranger interface {
 	// Descend iterates over keys in descending order within the range [beg, end).
 	Descend(ctx context.Context, beg, end string, errp *error) iter.Seq2[string, io.Reader]
 }
+
+// KeyRanger is similar to the Ranger, but does not load/access the value automatically.
+type KeyRanger interface {
+	// AscendKeys iterates over keys in ascending order within the range [beg, end).
+	AscendKeys(ctx context.Context, beg, end string, errp *error) iter.Seq[string]
+
+	// DescendKeys iterates over keys in descending order within the range [beg, end).
+	DescendKeys(ctx context.Context, beg, end string, errp *error) iter.Seq[string]
+}
